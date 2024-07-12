@@ -6,10 +6,11 @@ from utils.utils import *
 from capScreen import *
 from mouse_sendin import *
 import argparse
-# from models.experimental import attempt_load
+from models.experimental import attempt_load
 import sys
 import signal
 from ultralytics import YOLO
+
 
 # 部位索引到部位名称的映射字典
 body_parts_map = {
@@ -154,24 +155,15 @@ class AimYolov8:
         self.agnostic_nms = opt.agnostic_nms
         self.augment = opt.augment
         self.bounding_box = {'left': 0, 'top': 0, 'width': 1920, 'height': 1080}
-        # load model
+        # 选择设备
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # 使用YOLO类加载模型，确保指定了正确的设备
-        self.model = YOLO(self.weights).to(self.device)
-        # 加载模型到对应的设备上
-        self.img_size = check_img_size(self.img_size)
-        # 检查并返回合适模型最大步长的尺寸
         self.half = self.device.type != 'cpu'
-        # 半精度只支持cuda
-        if self.device.type == 'cpu' or not self.half:
-            # 将模型转换为半精度
-            self.model.to(dtype=torch.float16)
-        else:
-            self.model.to(dtype=torch.float32)
-        print(self.half,end='\n')
-        print(self.device.type)
-        # 如果在gpu则转换model为半精度FP16
-        self.names = self.model.modules.names if hasattr(self.model, 'module') else self.model.names
+        # 加载模型
+        self.model = YOLO(self.weights)
+        self.img_size = check_img_size(self.img_size)
+        self.model.to(self.device)
+        # 模型属性
+        self.names = self.model.module.names if hasattr(self.model, 'module') else self.model.names
         self.colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(self.names))]
 
     @torch.no_grad()
@@ -192,7 +184,6 @@ class AimYolov8:
             aim_person_center_head = []
             img0 = capScreen(sct, self.bounding_box)
             # 此时得到的格式为HWC和BGR
-
             img = pre_process(img0=img0, img_sz=img_sz, half=self.half, device=self.device)
 
             t1 = torch_utils.time_synchronized()
@@ -211,10 +202,8 @@ class AimYolov8:
                 move_mouse(mouse_control, aim_person_center_head)
             print(f'{s} Done. ({t2 - t1:.3f}s)')
 
-
             if self.view_img:
                 view_imgs(img0=img0)
-
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -232,7 +221,6 @@ def parseArgs():
     # 解析命令行参数保存在opt中
     return opt
 
-
 def signal_handler(signal, frame):
     print('Exiting...')
     sys.exit(0)
@@ -242,6 +230,8 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     # 注册信号接收器 Ctrl+C退出程序
 
+
+
     opt = parseArgs()
     print(opt)
 
@@ -249,8 +239,3 @@ if __name__ == '__main__':
     print('The AimYolov8 Object Created.')
 
     aim_yolo.run()
-
-
-
-
-

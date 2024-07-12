@@ -8,9 +8,9 @@ model = YOLO('./yolov8n-pose.pt')
 # model = YOLO('yolov8n-pose.pt')
 
 # # Define path to video file
-source = 'D:/Program Files (x86)/Pycharm/AimYolov8/dabian.jpg'
+# source = 'D:/Program Files (x86)/Pycharm/AimYolov8/dabian.jpg'
 
-source = 'test.jpg'
+source = 'D:/Program Files (x86)/Pycharm/AimYolov8/test.jpg'
 
 # # Run inference on the source
 # save=True,
